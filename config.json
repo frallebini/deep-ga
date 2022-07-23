@@ -1,0 +1,30 @@
+{
+  "environment": "ALE/SpaceInvaders-v5",
+  "stacked_frames": 4,
+  "actions": 18,
+  "population_size": 1000,
+  "truncation_size": 20,
+  "mutation_power": 0.002,
+  "seed_bits": 28,
+  "max_episode_frames": 2e4,
+  "max_train_frames": 1e9,
+  "conv1": {
+    "out_channels": 32,
+    "kernel_size": 8,
+    "stride": 4
+  },
+    "conv2": {
+    "out_channels": 64,
+    "kernel_size": 4,
+    "stride": 2
+  },
+  "conv3": {
+    "out_channels": 64,
+    "kernel_size": 3,
+    "stride": 1
+  },
+  "lin1": {
+    "in_features": 3136,
+    "out_features": 512
+  }
+}
