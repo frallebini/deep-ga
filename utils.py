@@ -31,8 +31,8 @@ def sort_by_score(
 
 def log_stats(
         scores: List[float],
-        time: int,
         frames: int,
+        time: float,
         stats: Dict) -> Dict:
     best = scores[0]
     mean = np.mean(scores)
@@ -40,8 +40,8 @@ def log_stats(
     stats['best'].append(best)
     stats['mean'].append(mean)
     stats['std'].append(std)
-    stats['tot_time'].append(time)
     stats['tot_frames'].append(frames)
+    stats['tot_time'].append(time)
     print(f'Best score:      {best:.1f}')
     print(f'Mean score:      {mean:.1f}')
     print(f'Std of scores:   {std:.1f}')
@@ -54,23 +54,23 @@ def save_checkpoint(
         scores: List[float],
         gen: int,
         frames: int,
-        time: int,
+        time: float,
         stats: Dict,
         cfg: Dict) -> None:
-    fname = cfg['environment'].split('/')[-1].split('-')[0]
-    stats = log_stats(scores, time, frames, stats)
+    env_name = cfg['environment'].split('/')[-1].split('-')[0]
+    stats = log_stats(scores, frames, time, stats)
 
     path = Path('stats')
     path.mkdir(exist_ok=True)
-    with open(path/f'{fname}_gen{gen}.json', 'w') as f:
+    with open(path/f'{env_name}_gen{gen}.json', 'w') as f:
         json.dump(stats, f, indent=4)
     if gen > 0:
-        Path(path/f'{fname}_gen{gen-1}.json').unlink()
+        Path(path/f'{env_name}_gen{gen-1}.json').unlink()
 
     model = uncompress(model)
     path = Path('models')
     path.mkdir(exist_ok=True)
-    torch.save(model.state_dict(), path/f'{fname}_gen{gen}.pt')
+    torch.save(model.state_dict(), path/f'{env_name}_gen{gen}.pt')
 
 
 def restore_checkpoint(env_name: str, gen: int) -> UncompressedNN:

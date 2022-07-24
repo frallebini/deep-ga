@@ -34,7 +34,7 @@ def train(env: gym.Env, cfg: Dict) -> None:
     gen_count = 0
     frame_count = 0
     time_count = 0
-    stats = {'best': [], 'mean': [], 'std': [], 'tot_time': [], 'tot_frames': []}
+    stats = {'best': [], 'mean': [], 'std': [], 'tot_frames': [], 'tot_time': []}
     while frame_count < cfg['max_train_frames']:
         start = time()
         if gen_count == 0:
