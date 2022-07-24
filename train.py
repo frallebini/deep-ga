@@ -3,18 +3,21 @@ import gym
 import json
 import random
 import torch
-from pathlib import Path
+from time import time
 from tqdm import tqdm
-from typing import Tuple, Dict
+from typing import Dict, Tuple
 
 from compressed import CompressedNN
-from preprocess import FrameStacker, DownSampler
-from utils import uncompress, sort_by_score, log_scores
+from preprocess import DownSampler, FrameStacker
+from utils import save_checkpoint, sort_by_score, uncompress
 
 gym.logger.set_level(40)
 
 
-def play_episode(compressed_model: CompressedNN, env: gym.Env, max_frames: int) -> Tuple[float, int]:
+def play_episode(
+        compressed_model: CompressedNN,
+        env: gym.Env,
+        max_frames: int) -> Tuple[float, int]:
     model = uncompress(compressed_model)
     obs = env.reset()
     score = 0
@@ -27,11 +30,13 @@ def play_episode(compressed_model: CompressedNN, env: gym.Env, max_frames: int) 
     return score, info['episode_frame_number']
 
 
-def train(env: gym.Env, cfg: Dict) -> Tuple[CompressedNN, Dict]:
+def train(env: gym.Env, cfg: Dict) -> None:
     gen_count = 0
     frame_count = 0
-    stats = {'best': [], 'mean': [], 'std': []}
-    while frame_count < 1:  # cfg['max_train_frames']:
+    time_count = 0
+    stats = {'best': [], 'mean': [], 'std': [], 'tot_time': [], 'tot_frames': []}
+    while frame_count < cfg['max_train_frames']:
+        start = time()
         if gen_count == 0:
             models = [CompressedNN() for _ in range(cfg['population_size'])]
             scores = []
@@ -50,10 +55,10 @@ def train(env: gym.Env, cfg: Dict) -> Tuple[CompressedNN, Dict]:
             scores.append(score)
             frame_count += n_frames
         models, scores = sort_by_score(models, scores)
-        stats = log_scores(scores, stats)
+        end = time()
+        time_count += end - start
+        save_checkpoint(models[0], scores, gen_count, frame_count, time_count, stats, cfg)
         gen_count += 1
-    stats['gen_count'] = gen_count
-    return models[0], stats
 
 
 if __name__ == '__main__':
@@ -61,7 +66,6 @@ if __name__ == '__main__':
 
     with open('config.json') as f:
         cfg = json.load(f)
-    fname = cfg['environment'].split('/')[-1].split('-')[0]
 
     env = FrameStacker(DownSampler(gym.make(
         cfg['environment'],
@@ -69,14 +73,4 @@ if __name__ == '__main__':
         # render_mode='human',
         full_action_space=True)))
 
-    model, stats = train(env, cfg)
-
-    path = Path('stats')
-    path.mkdir(exist_ok=True)
-    with open(path/f'{fname}.json', 'w') as f:
-        json.dump(stats, f, indent=4)
-
-    path = Path('models')
-    path.mkdir(exist_ok=True)
-    model = uncompress(model)
-    torch.save(model.state_dict(), path/f'{fname}.pt')
+    train(env, cfg)

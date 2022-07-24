@@ -4,8 +4,7 @@ import torch
 
 from conv import ConvNN
 from preprocess import FrameStacker, DownSampler
-from utils import compress, uncompress
-
+from utils import compress, uncompress, restore_checkpoint
 
 with open('config.json') as f:
     cfg = json.load(f)
@@ -22,8 +21,7 @@ obs = env.reset()
 model = ConvNN()
 pred = model(obs)
 
-fname = cfg['environment'].split('/')[-1].split('-')[0]
-model.load_state_dict(torch.load(f'models/{fname}.pt'))
+model = restore_checkpoint('SpaceInvaders', 0)
 
 pred = model(obs)
 var = 1
