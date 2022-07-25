@@ -1,6 +1,7 @@
 import json
 import numpy as np
 import torch
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -24,17 +25,20 @@ def uncompress(model: CompressedNN) -> UncompressedNN:
 
 def sort_by_score(
         models: List[CompressedNN],
-        scores: List[float]) -> Tuple[np.ndarray, np.ndarray]:
+        scores: List[float]) -> Tuple[List[CompressedNN], List[float]]:
     models = np.array(models)
     scores = np.array(scores)
     by_decreasing_score = np.argsort(scores)[::-1]
-    return models[by_decreasing_score], scores[by_decreasing_score]
+    return list(models[by_decreasing_score]), list(scores[by_decreasing_score])
 
 
 def log_stats(
         scores: List[float],
-        frames: int,
-        time: float,
+        gen_frames: int,
+        gen_time: int,
+        tot_frames: int,
+        tot_time: float,
+        parents: List[CompressedNN],
         stats: Dict) -> Dict:
     best = scores[0]
     mean = np.mean(scores)
@@ -42,12 +46,16 @@ def log_stats(
     stats['best'].append(best)
     stats['mean'].append(mean)
     stats['std'].append(std)
-    stats['tot_frames'].append(frames)
-    stats['tot_time'].append(time)
+    stats['gen_frames'].append(gen_frames)
+    stats['gen_time'].append(gen_time)
+    stats['tot_frames'] = tot_frames
+    stats['tot_time'] = tot_time
+    if parents:
+        stats['parents'] = [parent.seeds for parent in parents]
     print(f'Best score:      {best:.1f}')
     print(f'Mean score:      {mean:.1f}')
     print(f'Std of scores:   {std:.1f}')
-    print(f'Tot # of frames: {frames}')
+    print(f'Tot # of frames: {tot_frames}')
     return stats
 
 
@@ -55,22 +63,24 @@ def save_checkpoint(
         model: CompressedNN,
         scores: List[float],
         gen: int,
-        frames: int,
-        time: float,
+        gen_frames: int,
+        gen_time: float,
+        tot_frames: int,
+        tot_time: float,
+        parents: List[CompressedNN],
         stats: Dict,
+        timestamp: str,
         cfg: Dict) -> None:
     env_name = cfg['environment'].split('/')[-1].split('-')[0]
-    stats = log_stats(scores, frames, time, stats)
+    stats = log_stats(scores, gen_frames, gen_time, tot_frames, tot_time, parents, stats)
 
-    path = Path('stats')
+    path = Path(f'stats/{timestamp}')
     path.mkdir(exist_ok=True)
     with open(path/f'{env_name}_gen{gen}.json', 'w') as f:
         json.dump(stats, f, indent=4)
-    if gen > 0:
-        Path(path/f'{env_name}_gen{gen-1}.json').unlink()
 
     model = uncompress(model)
-    path = Path('models')
+    path = Path(f'models/{timestamp}')
     path.mkdir(exist_ok=True)
     torch.save(model.state_dict(), path/f'{env_name}_gen{gen}.pt')
 

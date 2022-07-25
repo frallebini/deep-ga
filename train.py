@@ -3,6 +3,7 @@ import gym
 import json
 import random
 import torch
+from datetime import datetime
 from time import time
 from tqdm import tqdm
 from typing import Dict, Tuple
@@ -33,35 +34,44 @@ def play_episode(
 
 
 def train(env: gym.Env, cfg: Dict) -> None:
-    gen_count = 0
-    frame_count = 0
-    time_count = 0
-    stats = {'best': [], 'mean': [], 'std': [], 'tot_frames': [], 'tot_time': [], 'parents': []}
-    while frame_count < cfg['max_train_frames']:
+    gen = 0
+    gen_frames = 0
+    tot_frames = 0
+    tot_time = 0
+    timestamp = datetime.now().strftime('%d-%m-%Y_%H:%M:%S')
+    stats = {'best': [], 'mean': [], 'std': [], 'gen_frames': [], 'gen_time': [], 'parents': []}
+
+    while tot_frames < cfg['max_train_frames']:
         start = time()
-        if gen_count == 0:
+        if gen == 0:
+            parents = []
             models = [CompressedNN() for _ in range(cfg['population_size'])]
             scores = []
         else:
             parents = models[:cfg['truncation_size']]
             models = [parents[0]]
             scores = [scores[0]]
-            stats['parents'] = [parent.seeds for parent in parents]
-        for i in tqdm(range(cfg['population_size']), desc=f'Gen {gen_count}'):
-            if gen_count == 0:
-                score, n_frames = play_episode(models[i], env, cfg)
+        for i in tqdm(range(cfg['population_size']), desc=f'Gen {gen}'):
+            if gen == 0:
+                score, ep_frames = play_episode(models[i], env, cfg)
             else:
                 model = copy.deepcopy((random.choice(parents)))
                 model.mutate()
                 models.append(model)
-                score, n_frames = play_episode(model, env, cfg)
+                score, ep_frames = play_episode(model, env, cfg)
             scores.append(score)
-            frame_count += n_frames
+            gen_frames += ep_frames
         models, scores = sort_by_score(models, scores)
+
         end = time()
-        time_count += end - start
-        save_checkpoint(models[0], scores, gen_count, frame_count, time_count, stats, cfg)
-        gen_count += 1
+        gen_time = end - start
+        tot_time += gen_time
+        tot_frames += gen_frames
+        save_checkpoint(
+            models[0], scores, gen,
+            gen_frames, gen_time, tot_frames, tot_time, parents,
+            stats, timestamp, cfg)
+        gen += 1
 
 
 if __name__ == '__main__':
