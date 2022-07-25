@@ -14,7 +14,9 @@ def compress(model: UncompressedNN) -> CompressedNN:
 
 
 def uncompress(model: CompressedNN) -> UncompressedNN:
-    uncompressed = ConvNN(model.seeds[0])
+    with open('config.json') as f:
+        device = torch.device(json.load(f)['device'])
+    uncompressed = ConvNN(model.seeds[0]).to(device)
     for seed in model.seeds[1:]:
         uncompressed.mutate(seed)
     return uncompressed

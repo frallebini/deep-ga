@@ -1,5 +1,6 @@
 {
   "environment": "ALE/SpaceInvaders-v5",
+  "device": "cpu",
   "stacked_frames": 4,
   "actions": 18,
   "population_size": 1000,

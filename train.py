@@ -17,15 +17,17 @@ gym.logger.set_level(40)
 def play_episode(
         compressed_model: CompressedNN,
         env: gym.Env,
-        max_frames: int) -> Tuple[float, int]:
+        cfg: Dict) -> Tuple[float, int]:
     model = uncompress(compressed_model)
-    obs = env.reset()
+    device = torch.device(cfg['device'])
+    obs = env.reset().to(device)
     score = 0
     while True:
         action = torch.argmax(model(obs)).item()
         obs, reward, done, info = env.step(action)
+        obs = obs.to(device)
         score += reward
-        if done or info['episode_frame_number'] > max_frames:
+        if done or info['episode_frame_number'] > cfg['max_episode_frames']:
             break
     return score, info['episode_frame_number']
 
@@ -34,7 +36,7 @@ def train(env: gym.Env, cfg: Dict) -> None:
     gen_count = 0
     frame_count = 0
     time_count = 0
-    stats = {'best': [], 'mean': [], 'std': [], 'tot_frames': [], 'tot_time': []}
+    stats = {'best': [], 'mean': [], 'std': [], 'tot_frames': [], 'tot_time': [], 'parents': []}
     while frame_count < cfg['max_train_frames']:
         start = time()
         if gen_count == 0:
@@ -44,14 +46,15 @@ def train(env: gym.Env, cfg: Dict) -> None:
             parents = models[:cfg['truncation_size']]
             models = [parents[0]]
             scores = [scores[0]]
+            stats['parents'] = [parent.seeds for parent in parents]
         for i in tqdm(range(cfg['population_size']), desc=f'Gen {gen_count}'):
             if gen_count == 0:
-                score, n_frames = play_episode(models[i], env, cfg['max_episode_frames'])
+                score, n_frames = play_episode(models[i], env, cfg)
             else:
                 model = copy.deepcopy((random.choice(parents)))
                 model.mutate()
                 models.append(model)
-                score, n_frames = play_episode(model, env, cfg['max_episode_frames'])
+                score, n_frames = play_episode(model, env, cfg)
             scores.append(score)
             frame_count += n_frames
         models, scores = sort_by_score(models, scores)
