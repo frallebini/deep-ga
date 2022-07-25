@@ -1,7 +1,6 @@
 import json
 import numpy as np
 import torch
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -33,16 +32,19 @@ def sort_by_score(
 
 
 def log_stats(
+        gen: int,
         scores: List[float],
         gen_frames: int,
         gen_time: int,
         tot_frames: int,
         tot_time: float,
         parents: List[CompressedNN],
+        timestamp: str,
         stats: Dict) -> Dict:
     best = scores[0]
     mean = np.mean(scores)
     std = np.std(scores)
+    stats['gen'] = gen
     stats['best'].append(best)
     stats['mean'].append(mean)
     stats['std'].append(std)
@@ -52,6 +54,7 @@ def log_stats(
     stats['tot_time'] = tot_time
     if parents:
         stats['parents'] = [parent.seeds for parent in parents]
+    stats['timestamp'] = timestamp
     print(f'Best score:      {best:.1f}')
     print(f'Mean score:      {mean:.1f}')
     print(f'Std of scores:   {std:.1f}')
@@ -72,7 +75,10 @@ def save_checkpoint(
         timestamp: str,
         cfg: Dict) -> None:
     env_name = cfg['environment'].split('/')[-1].split('-')[0]
-    stats = log_stats(scores, gen_frames, gen_time, tot_frames, tot_time, parents, stats)
+    stats = log_stats(
+        gen, scores,
+        gen_frames, gen_time, tot_frames, tot_time,
+        parents, timestamp, stats)
 
     path = Path(f'stats/{timestamp}')
     path.mkdir(exist_ok=True)
