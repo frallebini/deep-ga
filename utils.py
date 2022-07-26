@@ -39,7 +39,7 @@ def log_stats(
         tot_frames: int,
         tot_time: float,
         parents: List[CompressedNN],
-        timestamp: str,
+        tstamp: str,
         stats: Dict) -> Dict:
     best = scores[0]
     mean = np.mean(scores)
@@ -54,7 +54,7 @@ def log_stats(
     stats['tot_time'] = tot_time
     if parents:
         stats['parents'] = [parent.seeds for parent in parents]
-    stats['timestamp'] = timestamp
+    stats['timestamp'] = tstamp
     print(f'Best score:      {best:.1f}')
     print(f'Mean score:      {mean:.1f}')
     print(f'Std of scores:   {std:.1f}')
@@ -72,26 +72,43 @@ def save_checkpoint(
         tot_time: float,
         parents: List[CompressedNN],
         stats: Dict,
-        timestamp: str,
+        tstamp: str,
         cfg: Dict) -> None:
-    env_name = cfg['environment'].split('/')[-1].split('-')[0]
+    env_name = get_env_name(cfg)
     stats = log_stats(
         gen, scores,
         gen_frames, gen_time, tot_frames, tot_time,
-        parents, timestamp, stats)
+        parents, tstamp, stats)
 
-    path = Path(f'stats/{timestamp}')
+    path = Path('stats')/tstamp
     path.mkdir(exist_ok=True)
     with open(path/f'{env_name}_gen{gen}.json', 'w') as f:
         json.dump(stats, f, indent=4)
 
     model = uncompress(model)
-    path = Path(f'models/{timestamp}')
+    path = Path('models')/tstamp
     path.mkdir(exist_ok=True)
     torch.save(model.state_dict(), path/f'{env_name}_gen{gen}.pt')
 
 
-def restore_checkpoint(env_name: str, gen: int) -> UncompressedNN:
+def load_model(cfg: Dict) -> UncompressedNN:
+    tstamp = cfg['timestamp']
+    gen = cfg['generation']
+    env_name = cfg['environment'].split('/')[-1].split('-')[0]
+
+    print(f'Loading model w/ timestamp {tstamp} @ gen {gen} trained on {env_name}')
+
+    tstamp_path = sorted(Path('models').iterdir())[-1] if tstamp == 'latest' else Path('models')/tstamp
+    model_path = get_latest(tstamp_path) if gen == 'latest' else tstamp_path/f'{env_name}_gen{gen}.pt'
+
     model = ConvNN()
-    model.load_state_dict(torch.load(f'models/{env_name}_gen{gen}.pt'))
+    model.load_state_dict(torch.load(model_path))
     return model
+
+
+def get_env_name(cfg: Dict) -> str:
+    return cfg['environment'].split('/')[-1].split('-')[0]
+
+
+def get_latest(path: Path) -> Path:
+    return sorted(path.iterdir(), key=lambda p: int(p.stem.split('_')[-1].replace('gen', '')))[-1]

@@ -11,7 +11,7 @@ from typing import Dict
 from compressed import CompressedNN
 from evaluate import play_episode
 from preprocess import DownSampler, FrameStacker
-from utils import save_checkpoint, sort_by_score
+from utils import get_env_name, get_latest, save_checkpoint, sort_by_score, uncompress
 
 gym.logger.set_level(40)
 
@@ -25,7 +25,7 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
         tot_time = stats['tot_time']
         parents = [CompressedNN(seeds) for seeds in stats['parents']]
         scores = [stats['best'][-1]]
-        timestamp = stats['timestamp']
+        tstamp = stats['timestamp']
     else:
         restart = False
         gen = 0
@@ -35,7 +35,7 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
         parents = []
         scores = []
         stats = {'best': [], 'mean': [], 'std': [], 'gen_frames': [], 'gen_time': [], 'parents': []}
-        timestamp = datetime.now().strftime('%d-%m-%Y_%H:%M:%S')
+        tstamp = datetime.now().strftime('%Y-%m-%d_%H.%M.%S')
 
     while tot_frames < cfg['max_train_frames']:
         start = time()
@@ -48,12 +48,12 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
             models = [parents[0]]
         for i in tqdm(range(cfg['population_size']), desc=f'Gen {gen}'):
             if gen == 0:
-                score, ep_frames = play_episode(models[i], env, cfg)
+                score, ep_frames = play_episode(uncompress(models[i]), env, cfg)
             else:
                 model = copy.deepcopy((random.choice(parents)))
                 model.mutate()
                 models.append(model)
-                score, ep_frames = play_episode(model, env, cfg)
+                score, ep_frames = play_episode(uncompress(model), env, cfg)
             scores.append(score)
             gen_frames += ep_frames
         models, scores = sort_by_score(models, scores)
@@ -65,14 +65,15 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
         save_checkpoint(
             models[0], scores, gen,
             gen_frames, gen_time, tot_frames, tot_time, parents,
-            stats, timestamp, cfg)
+            stats, tstamp, cfg)
         restart = False
         gen += 1
 
 
 def restart_training(env: gym.Env, cfg: Dict) -> None:
-    timestamp_path = Path('stats') / f'{cfg["timestamp"]}'
-    stats_path = sorted(timestamp_path.iterdir(), key=lambda path: path.name)[-1]
+    tstamp = cfg["timestamp"]
+    tstamp_path = sorted(Path('stats').iterdir())[-1] if tstamp == 'latest' else Path('stats')/tstamp
+    stats_path = get_latest(tstamp_path)
     with open(stats_path) as f:
         stats = json.load(f)
     stats['gen'] += 1
@@ -81,7 +82,6 @@ def restart_training(env: gym.Env, cfg: Dict) -> None:
 
 if __name__ == '__main__':
     random.seed(42)  # there will still be the stochasticity of the environment
-    restart = True
 
     with open('config.json') as f:
         cfg = json.load(f)
@@ -89,10 +89,13 @@ if __name__ == '__main__':
     env = FrameStacker(DownSampler(gym.make(
         cfg['environment'],
         obs_type='grayscale',
-        # render_mode='human',
         full_action_space=True)))
+    env_name = get_env_name(cfg)
 
+    restart = cfg['restart'] == 'True'
     if restart:
+        print(f'Restarting training on {env_name}')
         restart_training(env, cfg)
     else:
+        print(f'Training from scratch on {env_name}')
         train(env, cfg)
