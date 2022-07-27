@@ -101,7 +101,8 @@ def load_model(cfg: Dict) -> UncompressedNN:
     model_path = get_latest(tstamp_path) if gen == 'latest' else tstamp_path/f'{env_name}_gen{gen}.pt'
 
     model = ConvNN()
-    model.load_state_dict(torch.load(model_path))
+    device = torch.device(cfg['device'])
+    model.load_state_dict(torch.load(model_path, map_location=device))
     return model
 
 

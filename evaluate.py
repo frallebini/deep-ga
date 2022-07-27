@@ -8,6 +8,8 @@ from preprocess import FrameStacker, DownSampler
 from uncompressed import UncompressedNN
 from utils import get_env_name, load_model
 
+gym.logger.set_level(40)
+
 
 def play_episode(
         model: UncompressedNN,
@@ -44,7 +46,9 @@ if __name__ == '__main__':
         cfg['environment'],
         obs_type='grayscale',
         render_mode='human',
-        full_action_space=True))), f'videos/{tstamp}/{env_name}_gen{gen}')
+        full_action_space=True))),
+        video_folder=f'videos/{tstamp}/{env_name}_gen{gen}',
+        name_prefix='')
 
     score = evaluate(env, cfg)
     print(score)
