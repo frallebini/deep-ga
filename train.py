@@ -1,12 +1,13 @@
 import copy
 import gym
 import json
+import numpy as np
 import random
 from datetime import datetime
 from pathlib import Path
 from time import time
 from tqdm import tqdm
-from typing import Dict
+from typing import Dict, List, Tuple
 
 from compressed import CompressedNN
 from evaluate import play_episode
@@ -56,6 +57,11 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
             scores.append(score)
             gen_frames += ep_frames
         models, scores = sort_by_score(models, scores)
+        elite, refined_scores, add_frames = select_elite(models, env, cfg)
+        scores[:cfg['elite_candidates']] = refined_scores
+        scores[0], scores[elite] = scores[elite], scores[0]
+        models[0], models[elite] = models[elite], models[0]
+        gen_frames += add_frames
         end = time()
 
         gen_time = end - start
@@ -69,6 +75,23 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
             stats, tstamp, cfg)
         restart = False
         gen += 1
+
+
+def select_elite(
+        models: List[CompressedNN],
+        env: gym.Env,
+        cfg: Dict) -> Tuple[int, List[float], int]:
+    candidates = models[:cfg['elite_candidates']]
+    scores = np.zeros((len(candidates), cfg['additional_episodes']))
+    add_frames = 0
+    for (i, model) in enumerate(candidates):
+        for j in tqdm(range(cfg['additional_episodes']), desc=f'\tAdditional episodes {i}'):
+            score, ep_frames = play_episode(uncompress(model), env, cfg)
+            scores[i, j] = score
+            add_frames += ep_frames
+    scores = np.mean(scores, axis=1)
+    elite = np.argmax(scores)
+    return elite, list(scores), add_frames
 
 
 def restart_training(env: gym.Env, cfg: Dict) -> None:
