@@ -17,7 +17,7 @@ class UncompressedNN(ABC, nn.Module):
         torch.manual_seed(seed)
         self.seeds.append(seed)
         params = nn.utils.parameters_to_vector(self.parameters())
-        params += self.cfg['mutation_power'] * torch.randn(params.size())
+        params += self.cfg['mutation_power'] * torch.randn(params.size(), device=self.cfg['device'])
         nn.utils.vector_to_parameters(params, self.parameters())
 
     def _generate_seed(self) -> int:

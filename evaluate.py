@@ -14,6 +14,7 @@ def play_episode(
         env: gym.Env,
         cfg: Dict) -> Tuple[float, int]:
     device = torch.device(cfg['device'])
+    model = model.to(device)
     obs = env.reset().to(device)
     score = 0
     while True:
