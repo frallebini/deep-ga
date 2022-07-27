@@ -32,9 +32,8 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
         gen_frames = 0
         tot_frames = 0
         tot_time = 0
-        parents = []
         scores = []
-        stats = {'best': [], 'mean': [], 'std': [], 'gen_frames': [], 'gen_time': [], 'parents': []}
+        stats = {'best': [], 'mean': [], 'std': [], 'gen_frames': [], 'gen_time': []}
         tstamp = datetime.now().strftime('%Y-%m-%d_%H.%M.%S')
 
     while tot_frames < cfg['max_train_frames']:
@@ -62,6 +61,8 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
         gen_time = end - start
         tot_time += gen_time
         tot_frames += gen_frames
+        if gen == 0:
+            parents = models[:cfg['truncation_size']]
         save_checkpoint(
             models[0], scores, gen,
             gen_frames, gen_time, tot_frames, tot_time, parents,

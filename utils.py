@@ -52,8 +52,7 @@ def log_stats(
     stats['gen_time'].append(gen_time)
     stats['tot_frames'] = tot_frames
     stats['tot_time'] = tot_time
-    if parents:
-        stats['parents'] = [parent.seeds for parent in parents]
+    stats['parents'] = [parent.seeds for parent in parents]
     stats['timestamp'] = tstamp
     print(f'Best score:      {best:.1f}')
     print(f'Mean score:      {mean:.1f}')
