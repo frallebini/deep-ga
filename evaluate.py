@@ -35,7 +35,7 @@ def play_n_episodes(
     return list(scores), np.mean(scores)
 
 
-def evaluate(env: gym.Env, cfg: Dict) -> float:
+def evaluate(env: gym.Env, cfg: Dict) -> Dict:
     model = load_model(cfg)
     scores, mean = play_n_episodes(model, env, cfg)
     return {'scores': scores, 'mean': mean}
