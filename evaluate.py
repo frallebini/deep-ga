@@ -4,11 +4,11 @@ import numpy as np
 import torch
 from gym.wrappers import RecordVideo
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict
 
 from preprocess import DownSampler, FrameStacker
 from uncompressed import UncompressedNN
-from utils import get_env_name, load_model
+from utils import delete_meta_files, get_env_name, load_model
 
 gym.logger.set_level(40)
 
@@ -16,7 +16,7 @@ gym.logger.set_level(40)
 def play_n_episodes(
         model: UncompressedNN,
         env: gym.Env,
-        cfg: Dict) -> Tuple[List[float], float]:
+        cfg: Dict) -> np.ndarray:
     device = torch.device(cfg['device'])
     model = model.to(device)
     obs = env.reset().to(device)
@@ -32,13 +32,16 @@ def play_n_episodes(
             print(f'Done episode {ep_count}')
             ep_count += 1
             env.reset()
-    return list(scores), np.mean(scores)
+    return scores
 
 
 def evaluate(env: gym.Env, cfg: Dict) -> Dict:
     model = load_model(cfg)
-    scores, mean = play_n_episodes(model, env, cfg)
-    return {'scores': scores, 'mean': mean}
+    scores = play_n_episodes(model, env, cfg)
+    return {
+        'scores': list(scores),
+        'mean_score': np.mean(scores),
+        'best_ep': int(np.argmax(scores))}
 
 
 if __name__ == '__main__':
@@ -62,3 +65,4 @@ if __name__ == '__main__':
     res = evaluate(env, cfg)
     with open(res_path/'scores.json', 'w') as f:
         json.dump(res, f, indent=4)
+    delete_meta_files(res_path)

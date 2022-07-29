@@ -112,3 +112,8 @@ def get_env_name(cfg: Dict) -> str:
 
 def get_latest(path: Path) -> Path:
     return sorted(path.iterdir(), key=lambda p: int(p.stem.split('_')[-1].replace('gen', '')))[-1]
+
+
+def delete_meta_files(path: Path) -> None:
+    for f in path.glob('*.meta.json'):
+        f.unlink()
