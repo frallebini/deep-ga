@@ -1,8 +1,9 @@
 {
-  "environment": "ALE/Frostbite-v5",
+  "environment": "ALE/SpaceInvaders-v5",
   "restart": "False",
-  "timestamp": "latest",
-  "generation": "latest",
+  "timestamp": "2022-07-28_08.22.22",
+  "generation": 15,
+  "render": "False",
   "device": "cpu",
   "stacked_frames": 4,
   "actions": 18,
@@ -14,6 +15,7 @@
   "max_train_frames": 1e9,
   "elite_candidates": 10,
   "additional_episodes": 30,
+  "eval_episodes": 10,
   "conv1": {
     "out_channels": 32,
     "kernel_size": 8,

@@ -3,6 +3,7 @@ import gym
 import json
 import numpy as np
 import random
+import torch
 from datetime import datetime
 from pathlib import Path
 from time import time
@@ -10,11 +11,28 @@ from tqdm import tqdm
 from typing import Dict, List, Tuple
 
 from compressed import CompressedNN
-from evaluate import play_episode
 from preprocess import DownSampler, FrameStacker
 from utils import get_env_name, get_latest, save_checkpoint, sort_by_score, uncompress
 
 gym.logger.set_level(40)
+
+
+def play_one_episode(
+        compressed: CompressedNN,
+        env: gym.Env,
+        cfg: Dict) -> Tuple[float, int]:
+    device = torch.device(cfg['device'])
+    model = uncompress(compressed).to(device)
+    obs = env.reset().to(device)
+    score = 0
+    while True:
+        action = torch.argmax(model(obs)).item()
+        obs, reward, done, info = env.step(action)
+        obs = obs.to(device)
+        score += reward
+        if done or info['episode_frame_number'] > cfg['max_episode_frames']:
+            break
+    return score, info['episode_frame_number']
 
 
 def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
@@ -48,12 +66,12 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
             models = [parents[0]]
         for i in tqdm(range(cfg['population_size']), desc=f'Gen {gen}'):
             if gen == 0:
-                score, ep_frames = play_episode(uncompress(models[i]), env, cfg)
+                score, ep_frames = play_one_episode(models[i], env, cfg)
             else:
                 model = copy.deepcopy((random.choice(parents)))
                 model.mutate()
                 models.append(model)
-                score, ep_frames = play_episode(uncompress(model), env, cfg)
+                score, ep_frames = play_one_episode(model, env, cfg)
             scores.append(score)
             gen_frames += ep_frames
         models, scores = sort_by_score(models, scores)
@@ -86,7 +104,7 @@ def select_elite(
     add_frames = 0
     for (i, model) in enumerate(candidates):
         for j in tqdm(range(cfg['additional_episodes']), desc=f'\tAdditional episodes {i}'):
-            score, ep_frames = play_episode(uncompress(model), env, cfg)
+            score, ep_frames = play_one_episode(model, env, cfg)
             scores[i, j] = score
             add_frames += ep_frames
     scores = np.mean(scores, axis=1)
