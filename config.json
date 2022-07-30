@@ -3,6 +3,7 @@
   "restart": "False",
   "timestamp": "2022-07-29_08.17.10",
   "generation": 15,
+  "random_policy": "False",
   "render": "False",
   "device": "cpu",
   "stacked_frames": 4,

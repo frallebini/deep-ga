@@ -134,8 +134,7 @@ if __name__ == '__main__':
         full_action_space=True)))
     env_name = get_env_name(cfg)
 
-    restart = cfg['restart'] == 'True'
-    if restart:
+    if cfg['restart'] == 'True':
         print(f'Restarting training on {env_name}')
         restart_training(env, cfg)
     else:

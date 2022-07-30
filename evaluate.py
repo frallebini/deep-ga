@@ -35,9 +35,30 @@ def play_n_episodes(
     return scores
 
 
+def random_play(
+        env: gym.Env,
+        cfg: Dict) -> np.ndarray:
+    env.reset()
+    n = cfg['eval_episodes']
+    ep_count = 0
+    scores = np.zeros(n)
+    while ep_count < n:
+        action = env.action_space.sample()
+        obs, reward, done, info = env.step(action)
+        scores[ep_count] += reward
+        if done:
+            print(f'Done episode {ep_count}')
+            ep_count += 1
+            env.reset()
+    return scores
+
+
 def evaluate(env: gym.Env, cfg: Dict) -> Dict:
-    model = load_model(cfg)
-    scores = play_n_episodes(model, env, cfg)
+    if cfg['random_policy'] == 'True':
+        scores = random_play(env, cfg)
+    else:
+        model = load_model(cfg)
+        scores = play_n_episodes(model, env, cfg)
     return {
         'scores': list(scores),
         'mean_score': np.mean(scores),
@@ -51,7 +72,10 @@ if __name__ == '__main__':
     env_name = get_env_name(cfg)
     gen = cfg['generation']
     render = cfg['render'] == 'True'
-    res_path = Path('results')/tstamp/env_name/f'gen{gen}'
+    if cfg['random_policy'] == 'True':
+        res_path = Path('results')/'random'/env_name
+    else:
+        res_path = Path('results')/tstamp/env_name/f'gen{gen}'
 
     env = RecordVideo(FrameStacker(DownSampler(gym.make(
         cfg['environment'],
