@@ -75,11 +75,12 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
             scores.append(score)
             gen_frames += ep_frames
         models, scores = sort_by_score(models, scores)
-        elite, refined_scores, add_frames = select_elite(models, env, cfg)
-        scores[:cfg['elite_candidates']] = refined_scores
-        scores[0], scores[elite] = scores[elite], scores[0]
-        models[0], models[elite] = models[elite], models[0]
-        gen_frames += add_frames
+        if cfg['elite_selection'] == 'True':
+            elite, refined_scores, add_frames = select_elite(models, env, cfg)
+            scores[:cfg['elite_candidates']] = refined_scores
+            scores[0], scores[elite] = scores[elite], scores[0]
+            models[0], models[elite] = models[elite], models[0]
+            gen_frames += add_frames
         end = time()
 
         gen_time = end - start

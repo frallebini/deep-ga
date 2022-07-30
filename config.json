@@ -1,6 +1,7 @@
 {
   "environment": "ALE/Frostbite-v5",
   "restart": "False",
+  "elite_selection": "True",
   "timestamp": "2022-07-29_08.17.10",
   "generation": 15,
   "random_policy": "False",
