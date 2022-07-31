@@ -12,21 +12,33 @@ from typing import Dict, List, Tuple
 
 from compressed import CompressedNN
 from preprocess import DownSampler, FrameStacker
+from uncompressed import UncompressedNN
 from utils import get_env_name, get_latest, save_checkpoint, sort_by_score, uncompress
 
 gym.logger.set_level(40)
 
 
+def epsilon_greedy(
+        model: UncompressedNN,
+        obs: torch.Tensor,
+        eps: float,
+        n_actions: int) -> int:
+    if random.random() < eps:
+        return random.randint(0, n_actions-1)
+    return torch.argmax(model(obs)).item()
+
+
 def play_one_episode(
         compressed: CompressedNN,
         env: gym.Env,
+        eps: float,
         cfg: Dict) -> Tuple[float, int]:
     device = torch.device(cfg['device'])
     model = uncompress(compressed).to(device)
     obs = env.reset().to(device)
     score = 0
     while True:
-        action = torch.argmax(model(obs)).item()
+        action = epsilon_greedy(model, obs, eps, cfg['actions'])
         obs, reward, done, info = env.step(action)
         obs = obs.to(device)
         score += reward
@@ -57,6 +69,16 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
 
     while tot_frames < cfg['max_train_frames']:
         start = time()
+
+        if cfg['epsilon_greedy'] == 'True':
+            span = 5
+            p_start = 0.5
+            p_end = 0
+            r = max((span-gen)/span, 0)
+            eps = (p_start-p_end) * r + p_end
+        else:
+            eps = 0
+
         if gen == 0:
             models = [CompressedNN() for _ in range(cfg['population_size'])]
         else:
@@ -66,21 +88,23 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
             models = [parents[0]]
         for i in tqdm(range(cfg['population_size']), desc=f'Gen {gen}'):
             if gen == 0:
-                score, ep_frames = play_one_episode(models[i], env, cfg)
+                score, ep_frames = play_one_episode(models[i], env, eps, cfg)
             else:
                 model = copy.deepcopy((random.choice(parents)))
                 model.mutate()
                 models.append(model)
-                score, ep_frames = play_one_episode(model, env, cfg)
+                score, ep_frames = play_one_episode(model, env, eps, cfg)
             scores.append(score)
             gen_frames += ep_frames
         models, scores = sort_by_score(models, scores)
+
         if cfg['elite_selection'] == 'True':
-            elite, refined_scores, add_frames = select_elite(models, env, cfg)
+            elite, refined_scores, add_frames = select_elite(models, env, eps, cfg)
             scores[:cfg['elite_candidates']] = refined_scores
             scores[0], scores[elite] = scores[elite], scores[0]
             models[0], models[elite] = models[elite], models[0]
             gen_frames += add_frames
+
         end = time()
 
         gen_time = end - start
@@ -99,13 +123,14 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
 def select_elite(
         models: List[CompressedNN],
         env: gym.Env,
+        eps: float,
         cfg: Dict) -> Tuple[int, List[float], int]:
     candidates = models[:cfg['elite_candidates']]
     scores = np.zeros((len(candidates), cfg['additional_episodes']))
     add_frames = 0
     for (i, model) in enumerate(candidates):
         for j in tqdm(range(cfg['additional_episodes']), desc=f'\tAdditional episodes {i}'):
-            score, ep_frames = play_one_episode(model, env, cfg)
+            score, ep_frames = play_one_episode(model, env, eps, cfg)
             scores[i, j] = score
             add_frames += ep_frames
     scores = np.mean(scores, axis=1)

@@ -23,7 +23,7 @@ class FrameStacker(gym.ObservationWrapper):
             self.n_frames = json.load(f)['stacked_frames']
         self.frames = deque(maxlen=self.n_frames)
 
-    def observation(self, obs: np.ndarray) -> np.ndarray:
+    def observation(self, obs: np.ndarray) -> torch.Tensor:
         self.frames.append(obs)
         if len(self.frames) == 1:
             self.frames.extend([obs for _ in range(self.n_frames-1)])
