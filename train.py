@@ -71,11 +71,7 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
         start = time()
 
         if cfg['epsilon_greedy'] == 'True':
-            span = 5
-            p_start = 0.5
-            p_end = 0
-            r = max((span-gen)/span, 0)
-            eps = (p_start-p_end) * r + p_end
+            eps = 10**-(gen+1) if gen < 3 else 0
         else:
             eps = 0
 

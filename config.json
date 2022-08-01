@@ -4,7 +4,7 @@
   "restart": "False",
   "elite_selection": "True",
   "epsilon_greedy": "True",
-  "timestamp": "2022-07-29_08.17.10",
+  "timestamp": "2022-08-01_08.33.46",
   "generation": 15,
   "random_policy": "False",
   "render": "False",
