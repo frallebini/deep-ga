@@ -129,7 +129,7 @@ def select_elite(
     scores = np.zeros((len(candidates), cfg['additional_episodes']))
     add_frames = 0
     for (i, model) in enumerate(candidates):
-        for j in tqdm(range(cfg['additional_episodes']), desc=f'\tAdditional episodes {i}'):
+        for j in tqdm(range(cfg['additional_episodes']), desc=f'    Additional episodes {i}'):
             score, ep_frames = play_one_episode(model, env, eps, cfg)
             scores[i, j] = score
             add_frames += ep_frames
