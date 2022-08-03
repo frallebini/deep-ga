@@ -71,7 +71,7 @@ def train(env: gym.Env, cfg: Dict, stats: Dict = None) -> None:
         start = time()
 
         if cfg['epsilon_greedy'] == 'True':
-            eps = 10**-(gen+1) if gen < 3 else 0
+            eps = 0.01 if gen == 0 else 0
         else:
             eps = 0
 
