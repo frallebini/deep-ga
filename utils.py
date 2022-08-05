@@ -81,7 +81,7 @@ def save_checkpoint(
 def load_model(cfg: Dict) -> UncompressedNN:
     tstamp = cfg['timestamp']
     gen = cfg['generation']
-    env_name = cfg['environment'].split('/')[-1].split('-')[0]
+    env_name = get_env_name(cfg)
 
     print(f'Loading model w/ timestamp {tstamp} @ gen {gen} trained on {env_name}')
 

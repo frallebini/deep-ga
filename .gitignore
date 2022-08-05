@@ -2,7 +2,7 @@
 .venv/
 __pycache__/
 .DS_Store
-models/
+models_old/
 stats/
 videos/
 results/
