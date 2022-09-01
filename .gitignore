@@ -1,8 +1,8 @@
-.idea/
-.venv/
-__pycache__/
-.DS_Store
-models_old/
-stats/
-videos/
-results/
+**/.idea/
+**/.DS_Store
+src/.venv/
+src/__pycache__/
+src/models_old/
+src/stats/
+src/videos/
+src/results/

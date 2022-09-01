@@ -127,7 +127,7 @@ woff = ["zopfli (>=0.1.4)", "brotlicffi (>=0.8.0)", "brotli (>=1.0.1)"]
 
 [[package]]
 name = "gym"
-version = "0.25.0"
+version = "0.25.2"
 description = "Gym: A universal API for reinforcement learning environments"
 category = "main"
 optional = false
@@ -142,14 +142,14 @@ numpy = ">=1.18.0"
 
 [package.extras]
 accept-rom-license = ["autorom[accept-rom-license] (>=0.4.2,<0.5.0)"]
-all = ["opencv-python (>=3.0)", "matplotlib (>=3.0)", "box2d-py (==2.3.5)", "ale-py (>=0.7.5,<0.8.0)", "pygame (==2.1.0)", "mujoco_py (>=2.1,<2.2)", "pytest (==7.0.1)", "mujoco (==2.2.0)", "lz4 (>=3.1.0)", "imageio (>=2.14.1)"]
+all = ["opencv-python (>=3.0)", "pytest (==7.0.1)", "mujoco (==2.2.0)", "pygame (==2.1.0)", "lz4 (>=3.1.0)", "ale-py (>=0.7.5,<0.8.0)", "mujoco_py (>=2.1,<2.2)", "imageio (>=2.14.1)", "swig (>=4.0.0,<5.0.0)", "matplotlib (>=3.0)", "box2d-py (==2.3.5)"]
 atari = ["ale-py (>=0.7.5,<0.8.0)"]
-box2d = ["box2d-py (==2.3.5)", "pygame (==2.1.0)"]
+box2d = ["box2d-py (==2.3.5)", "pygame (==2.1.0)", "swig (>=4.0.0,<5.0.0)"]
 classic_control = ["pygame (==2.1.0)"]
 mujoco = ["mujoco (==2.2.0)", "imageio (>=2.14.1)"]
 mujoco_py = ["mujoco_py (>=2.1,<2.2)"]
 other = ["lz4 (>=3.1.0)", "opencv-python (>=3.0)", "matplotlib (>=3.0)"]
-testing = ["opencv-python (>=3.0)", "matplotlib (>=3.0)", "box2d-py (==2.3.5)", "pygame (==2.1.0)", "mujoco_py (>=2.1,<2.2)", "mujoco (==2.2.0)", "lz4 (>=3.1.0)", "imageio (>=2.14.1)", "pytest (==7.0.1)"]
+testing = ["opencv-python (>=3.0)", "mujoco (==2.2.0)", "pygame (==2.1.0)", "lz4 (>=3.1.0)", "mujoco_py (>=2.1,<2.2)", "imageio (>=2.14.1)", "swig (>=4.0.0,<5.0.0)", "matplotlib (>=3.0)", "box2d-py (==2.3.5)", "pytest (==7.0.1)"]
 toy_text = ["pygame (==2.1.0)"]
 
 [[package]]

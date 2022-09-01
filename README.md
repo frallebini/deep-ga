@@ -1,57 +1,10 @@
 # Deep GA
-Author: [Francesco Ballerini](mailto:francesco.ballerini3@studio.unibo.it)
 
-## Installing dependencies
-1. Install [poetry](https://python-poetry.org/) by running
-    ```shell
-   curl -sSL https://install.python-poetry.org | python3 -
-   ```
-2. `cd` into the project directory and run
-    ```shell
-   poetry install
-   ```
-   
-## Evaluation
-`cd` into the project directory and run
-```shell
-poetry shell
-```
-followed by
-```shell
-python evaluate.py
-```
-The model will be evaluated by playing 30 episodes of *Frostbite*. Scores and videos will be stored in a newly 
-created `results` directory.
+<p align="center">
+<img alt="Frostbite" src="src/demos/frost_elite.gif" width="50%">
+<img alt="Space Invaders" src="src/demos/space_elite.gif" align="right" width="50%">
+</p>
 
-To play *Space Invaders* instead, replace
-```
-"environment": "ALE/Frostbite-v5"
-```
-with
-```
-"environment": "ALE/SpaceInvaders-v5"
-```
-in [`config.json`](config.json).
+We train a convolutional neural network to play two Atari 2600 games from the Arcade Learning Environment, *Space Invaders* and *Frostbite*. The model, as in DQN, receives raw pixels in input and outputs action values. However, differently from DQN and other popular approaches, it is trained with a gradient-free, population-based method belonging to the family of genetic algorithms, which allows us to achieve interesting results after training the network on a single desktop and with CPU only.
 
-## Training
-`cd` into the project directory and run
-```shell
-poetry shell
-```
-followed by
-```shell
-python train.py
-```
-The model will be trained on *Frostbite* until the total number of frames it has seen is `>=1e9` (`"max_train_frames"` 
-in [`config.json`](config.json)). You can stop the training at any moment, as checkpoints are saved in the 
-[`models`](models) directory at each generation.
-
-To train on *Space Invaders* instead, replace
-```
-"environment": "ALE/Frostbite-v5"
-```
-with
-```
-"environment": "ALE/SpaceInvaders-v5"
-```
-in [`config.json`](config.json).
+See [report.pdf](report.pdf) for details and [src](src) for the implementation.
